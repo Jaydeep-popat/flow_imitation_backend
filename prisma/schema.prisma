@@ -1,0 +1,532 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// Enums are like constants for fixed-choice fields.
+// PostgreSQL stores these efficiently. Way better than plain strings.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  MANAGER
+  VIEWER
+}
+
+enum PartyType {
+  DEALER
+  SUPPLIER
+}
+
+enum AssignmentStatus {
+  ISSUED        // Raw material given to worker, work not started yet
+  IN_PROGRESS   // Worker has started manufacturing
+  PARTIALLY_RETURNED // Worker returned some pieces, more pending
+  COMPLETED     // All pieces returned and accounted for
+  CLOSED        // Manually closed by owner (e.g. worker inactive)
+}
+
+enum OrderStatus {
+  DRAFT         // Order being prepared, not confirmed
+  CONFIRMED     // Confirmed, stock reserved
+  PACKED        // Physically packed, ready to ship
+  DISPATCHED    // Shipped to dealer
+  CANCELLED     // Cancelled (with reason)
+}
+
+enum PaymentMode {
+  CASH
+  BANK_TRANSFER
+  UPI
+}
+
+enum PaymentType {
+  DEALER_PAYMENT      // Money received from dealer against invoice
+  SUPPLIER_PAYMENT    // Money paid to supplier for raw material
+  WORKER_PAYMENT      // Money paid to worker as earning settlement
+  DEALER_ADVANCE      // Advance received from dealer (before invoice)
+  WORKER_ADVANCE      // Advance paid to worker (before work completion)
+}
+
+enum RawMaterialUnit {
+  KG
+  GRAM
+  PIECE
+  METER
+  DOZEN
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 1: USERS
+// Staff who can log in to the system.
+// OWNER is the super-admin. MANAGER does operations. VIEWER is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String   // bcrypt hash — never store plain text
+  role         Role     @default(MANAGER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations — tracks who created what (audit trail)
+  createdDesigns        Design[]
+  createdOrders         Order[]
+  createdAssignments    WorkerAssignment[]
+  recordedPayments      Payment[]
+  packagingBatches      PackagingBatch[]
+  rawMaterialPurchases  RawMaterialPurchase[]
+
+  @@map("users") // actual table name in PostgreSQL
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 2: RAW MATERIALS
+// Tracks what raw material has been purchased and from which supplier.
+// Stock is calculated as: total purchased - total issued to workers.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RawMaterialType {
+  id          String          @id @default(uuid())
+  name        String          @unique // e.g. "Gold Plated Metal Base", "Rhodium Base"
+  unit        RawMaterialUnit @default(KG)
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+
+  // Relations
+  purchases   RawMaterialPurchase[]
+  assignments WorkerAssignment[]
+  issuances   RawMaterialIssuance[]
+
+  @@map("raw_material_types")
+}
+
+model RawMaterialPurchase {
+  id               String          @id @default(uuid())
+  materialType     RawMaterialType @relation(fields: [materialTypeId], references: [id])
+  materialTypeId   String
+  supplier         Party           @relation(fields: [supplierId], references: [id])
+  supplierId       String
+  quantity         Float           // in the unit defined on RawMaterialType
+  costPerUnit      Decimal         @db.Decimal(10, 2)
+  totalCost        Decimal         @db.Decimal(10, 2)
+  purchaseDate     DateTime        @default(now())
+  invoiceNumber    String?         // supplier's invoice number if available
+  notes            String?
+  createdBy        User            @relation(fields: [createdById], references: [id])
+  createdById      String
+  createdAt        DateTime        @default(now())
+
+  @@map("raw_material_purchases")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 3: SUPPLEMENTARY MATERIALS
+// Items issued to workers along with raw material lots:
+// stones, diamonds, fittings, threads, coatings, etc.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model SupplementaryMaterialType {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. "White Stones", "Golden Fittings", "Red Beads"
+  unit        String   // "pieces", "grams", "ml" — flexible string since units vary
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Current stock tracked here
+  stockQuantity Float @default(0)
+
+  // Relations
+  issuances SupplementaryIssuance[]
+
+  @@map("supplementary_material_types")
+}
+
+model SupplementaryIssuance {
+  id           String                    @id @default(uuid())
+  assignment   WorkerAssignment          @relation(fields: [assignmentId], references: [id])
+  assignmentId String
+  material     SupplementaryMaterialType @relation(fields: [materialId], references: [id])
+  materialId   String
+  quantity     Float
+  issuedAt     DateTime                  @default(now())
+  notes        String?
+
+  @@map("supplementary_issuances")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 4: PRODUCT DESIGNS
+// The master catalogue of all jewellery designs.
+// Diamond count is the key field — it determines the worker piece rate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model DesignCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique // Necklace, Earring, Bracelet, Ring, Maang Tikka, etc.
+  createdAt DateTime @default(now())
+
+  designs Design[]
+
+  @@map("design_categories")
+}
+
+model Design {
+  id              String         @id @default(uuid())
+  designCode      String         @unique // e.g. "AY-NK-001"
+  name            String
+  category        DesignCategory @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  material        String?        // e.g. "Gold Plated", "Silver Plated", "Rhodium"
+  finish          String?        // e.g. "Matte", "Glossy", "Antique"
+
+  // The most important fields for this business:
+  diamondCount    Int            @default(0)   // Number of diamonds/stones on this design
+  pieceRateRs     Decimal        @db.Decimal(8, 2) // Worker gets paid this per piece
+  salePricePerDozen Decimal      @db.Decimal(10, 2) // Default wholesale price per dozen
+
+  imageUrl        String?        // Optional reference image
+  isActive        Boolean        @default(true)
+  notes           String?
+  createdBy       User           @relation(fields: [createdById], references: [id])
+  createdById     String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  assignments     WorkerAssignment[]
+  inventoryStock  InventoryStock?
+  orderItems      OrderItem[]
+  dealerPricing   DealerDesignPrice[]
+
+  @@map("designs")
+}
+
+// Dealer-specific price overrides per design
+// Used when a dealer has a negotiated price different from the catalogue price
+model DealerDesignPrice {
+  id        String   @id @default(uuid())
+  dealer    Party    @relation(fields: [dealerId], references: [id])
+  dealerId  String
+  design    Design   @relation(fields: [designId], references: [id])
+  designId  String
+  pricePerDozen Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  @@unique([dealerId, designId]) // One price override per dealer per design
+  @@map("dealer_design_prices")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 5: PARTIES
+// Unified table for both Dealers (buyers) and Suppliers.
+// partyType field distinguishes them.
+// Workers are a separate table since they have very different attributes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Party {
+  id             String    @id @default(uuid())
+  partyType      PartyType // DEALER or SUPPLIER
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  gstNumber      String?
+
+  // Credit settings (relevant for dealers)
+  creditLimit    Decimal   @default(0) @db.Decimal(12, 2)
+  creditDays     Int       @default(0) // payment due within this many days
+
+  // Opening balance — for onboarding existing parties with prior history
+  // Positive = party owes us money (dealer), Negative = we owe them (supplier)
+  openingBalance Decimal   @default(0) @db.Decimal(12, 2)
+
+  isActive       Boolean   @default(true)
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  rawMaterialPurchases RawMaterialPurchase[]  // supplier's purchases
+  orders               Order[]                // dealer's orders
+  payments             Payment[]              // all payments linked to this party
+  dealerPricing        DealerDesignPrice[]    // dealer-specific prices
+
+  @@map("parties")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 6: WORKERS
+// External artisans who manufacture jewellery.
+// Kept separate from Party because workers have completely different attributes:
+// they receive lots, return pieces, and get paid per piece.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Worker {
+  id            String   @id @default(uuid())
+  name          String
+  phone         String?
+  address       String?
+  idProofType   String?  // Aadhar, PAN, Voter ID, etc.
+  idProofNumber String?
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  assignments   WorkerAssignment[]
+  workerPayments WorkerPayment[]
+
+  @@map("workers")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 7: WORKER ASSIGNMENTS
+// The core of the manufacturing flow.
+// Each assignment = one worker + one design + one raw material lot.
+// A worker can have multiple active assignments (one per design).
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WorkerAssignment {
+  id               String           @id @default(uuid())
+  worker           Worker           @relation(fields: [workerId], references: [id])
+  workerId         String
+  design           Design           @relation(fields: [designId], references: [id])
+  designId         String
+
+  // Raw material issued for this assignment
+  rawMaterialType  RawMaterialType  @relation(fields: [rawMaterialTypeId], references: [id])
+  rawMaterialTypeId String
+  rawMaterialQty   Float            // quantity of raw material issued
+
+  // Piece tracking
+  expectedPieces   Int              // how many pieces the owner expects back
+  returnedPieces   Int      @default(0)  // total pieces received so far (all batches)
+  rejectedPieces   Int      @default(0)  // pieces rejected for quality issues
+
+  // The piece rate AT TIME OF ASSIGNMENT — stored here so future rate changes
+  // don't affect old calculations (same reason invoices store price at time of sale)
+  pieceRateAtAssignment Decimal    @db.Decimal(8, 2)
+
+  status           AssignmentStatus @default(ISSUED)
+  issuedAt         DateTime         @default(now())
+  expectedReturnDate DateTime?
+  completedAt      DateTime?
+  notes            String?
+  createdBy        User             @relation(fields: [createdById], references: [id])
+  createdById      String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  goodsReturns          GoodsReturn[]          // batches of pieces returned
+  rawMaterialIssuance   RawMaterialIssuance?
+  supplementaryIssuances SupplementaryIssuance[]
+
+  @@map("worker_assignments")
+}
+
+// Each time a worker returns a batch of pieces, one GoodsReturn is created.
+// Assignment can have many returns (partial deliveries supported).
+model GoodsReturn {
+  id             String          @id @default(uuid())
+  assignment     WorkerAssignment @relation(fields: [assignmentId], references: [id])
+  assignmentId   String
+  piecesReturned Int             // pieces returned in THIS batch
+  rejectedPieces Int     @default(0) // pieces rejected from this batch
+  acceptedPieces Int             // = piecesReturned - rejectedPieces
+
+  // Earning calculated for this return batch
+  // earningAmount = acceptedPieces × pieceRateAtAssignment
+  earningAmount  Decimal         @db.Decimal(10, 2)
+
+  returnedAt     DateTime        @default(now())
+  notes          String?         // quality notes, rejection reason, etc.
+
+  @@map("goods_returns")
+}
+
+// Tracks money paid to workers — separate from GoodsReturn
+// because payment timing may differ from goods collection
+model WorkerPayment {
+  id          String      @id @default(uuid())
+  worker      Worker      @relation(fields: [workerId], references: [id])
+  workerId    String
+  amount      Decimal     @db.Decimal(10, 2)
+  paymentMode PaymentMode @default(CASH)
+  isAdvance   Boolean     @default(false) // true = advance before work completion
+  paidAt      DateTime    @default(now())
+  notes       String?
+
+  @@map("worker_payments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 8: INVENTORY
+// Two-stage stock: unpackaged pieces → packaged dozens.
+//
+// InventoryStock = running stock tracker per design.
+// Think of it like a ledger balance — updated on every event.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model InventoryStock {
+  id                String   @id @default(uuid())
+  design            Design   @relation(fields: [designId], references: [id])
+  designId          String   @unique  // one stock record per design
+
+  // Unpackaged: finished pieces received from workers, not yet packed
+  unpackagedPieces  Int      @default(0)
+
+  // Packaged: ready-to-sell dozens
+  packagedDozens    Int      @default(0)
+
+  // Alert threshold — owner sets this per design
+  lowStockAlertAt   Int      @default(5)  // alert when packagedDozens drops below this
+
+  updatedAt         DateTime @updatedAt
+
+  // All packaging events for this design
+  packagingBatches  PackagingBatch[]
+
+  @@map("inventory_stock")
+}
+
+// Each time owner packs unpackaged pieces into dozens, a PackagingBatch is recorded.
+model PackagingBatch {
+  id              String         @id @default(uuid())
+  inventoryStock  InventoryStock @relation(fields: [stockId], references: [id])
+  stockId         String
+  dozensPackaged  Int            // how many dozens packed in this batch
+  piecesUsed      Int            // pieces consumed = dozensPackaged × 12
+  packedAt        DateTime       @default(now())
+  packedBy        User           @relation(fields: [packedById], references: [id])
+  packedById      String
+  notes           String?
+
+  @@map("packaging_batches")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 9: ORDERS & DISPATCH
+// Wholesale orders placed by dealers.
+// Order → OrderItems (line items per design) → Dispatch
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id             String      @id @default(uuid())
+  orderNumber    String      @unique // e.g. "ORD-2025-0001" — generated by app
+  dealer         Party       @relation(fields: [dealerId], references: [id])
+  dealerId       String
+  status         OrderStatus @default(DRAFT)
+
+  // Financial summary (denormalized for quick access — calculated from items)
+  subtotalAmount Decimal     @db.Decimal(12, 2) @default(0)
+  discountAmount Decimal     @db.Decimal(12, 2) @default(0)
+  totalAmount    Decimal     @db.Decimal(12, 2) @default(0)
+
+  // Payment type at time of order
+  isCreditOrder  Boolean     @default(false)
+  dueDate        DateTime?   // set if isCreditOrder = true
+
+  // Dispatch details
+  dispatchedAt   DateTime?
+  transportMode  String?     // "DTDC", "Self Delivery", "Bus", etc.
+  trackingRef    String?
+
+  // Cancellation
+  cancelledAt    DateTime?
+  cancelReason   String?
+
+  notes          String?
+  createdBy      User        @relation(fields: [createdById], references: [id])
+  createdById    String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  items    OrderItem[]
+  payments Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String  @id @default(uuid())
+  order           Order   @relation(fields: [orderId], references: [id])
+  orderId         String
+  design          Design  @relation(fields: [designId], references: [id])
+  designId        String
+
+  quantityDozens  Int                        // number of dozens ordered
+  pricePerDozen   Decimal @db.Decimal(10, 2) // price locked at time of order
+  lineTotal       Decimal @db.Decimal(12, 2) // = quantityDozens × pricePerDozen
+
+  // Dispatch tracking per item (supports partial dispatch)
+  dispatchedDozens Int    @default(0)
+
+  @@map("order_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 10: PAYMENTS
+// Unified payments table for all money movement:
+// - Receiving money from dealers
+// - Paying suppliers
+// - Paying workers
+// paymentType field distinguishes the direction and purpose.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id            String      @id @default(uuid())
+  paymentType   PaymentType
+  paymentMode   PaymentMode
+
+  // These are all optional — only the relevant ones are filled per payment type
+  party         Party?      @relation(fields: [partyId], references: [id])
+  partyId       String?     // dealer or supplier
+
+  order         Order?      @relation(fields: [orderId], references: [id])
+  orderId       String?     // which order this payment is against (if dealer payment)
+
+  amount        Decimal     @db.Decimal(12, 2)
+  isAdvance     Boolean     @default(false)
+  notes         String?
+  recordedBy    User        @relation(fields: [recordedById], references: [id])
+  recordedById  String
+  paidAt        DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE 11: RAW MATERIAL ISSUANCE (Stock deduction log)
+// Whenever raw material is issued to a worker assignment, this records it.
+// Allows stock calculation: purchased - issued = current stock.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RawMaterialIssuance {
+  id               String           @id @default(uuid())
+  materialType     RawMaterialType  @relation(fields: [materialTypeId], references: [id])
+  materialTypeId   String
+  assignment       WorkerAssignment @relation(fields: [assignmentId], references: [id])
+  assignmentId     String           @unique // one issuance per assignment
+  quantity         Float
+  issuedAt         DateTime         @default(now())
+  notes            String?
+
+  @@map("raw_material_issuances")
+}
