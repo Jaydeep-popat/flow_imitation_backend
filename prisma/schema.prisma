@@ -6,12 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENUMS
-// Enums are like constants for fixed-choice fields.
-// PostgreSQL stores these efficiently. Way better than plain strings.
-// ─────────────────────────────────────────────────────────────────────────────
-
 enum Role {
   OWNER
   MANAGER
@@ -70,8 +64,8 @@ enum RawMaterialUnit {
 model User {
   id           String   @id @default(uuid())
   name         String
-  email        String   @unique
-  phone        String?
+  email        String?   
+  phone        String   @unique
   passwordHash String   // bcrypt hash — never store plain text
   role         Role     @default(MANAGER)
   isActive     Boolean  @default(true)
