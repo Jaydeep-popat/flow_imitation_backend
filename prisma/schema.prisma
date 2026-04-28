@@ -12,10 +12,13 @@ datasource db {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum Role {
-  SUPER_ADMIN     // Flowoid developer — full platform access, no tenant scope
-  TENANT_OWNER    // Business owner — full access within their tenant only
-  TENANT_MANAGER  // Staff — operational access within their tenant
-  TENANT_VIEWER   // Read-only access within their tenant
+  OWNER
+  MANAGER
+  VIEWER
+  SUPER_ADMIN
+  TENANT_OWNER
+  TENANT_MANAGER
+  TENANT_VIEWER
 }
 
 enum PlanType {
