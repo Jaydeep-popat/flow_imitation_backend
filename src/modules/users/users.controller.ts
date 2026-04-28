@@ -10,7 +10,7 @@ const demoUser = {
 	name: 'Ravi Shah',
 	email: 'ravi@flowoid.com',
 	phone: '9876543210',
-	role: 'MANAGER',
+	role: 'TENANT_MANAGER',
 	isActive: true,
 	createdAt: '2025-01-01T00:00:00.000Z',
 };
@@ -97,7 +97,11 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 		}
 
 		if (role && !Object.values(Role).includes(String(role).toUpperCase() as Role)) {
-			errorResponse(res, 'Invalid role. Allowed values: OWNER, MANAGER, VIEWER', 400);
+			errorResponse(
+				res,
+				'Invalid role. Allowed values: SUPER_ADMIN, TENANT_OWNER, TENANT_MANAGER, TENANT_VIEWER',
+				400,
+			);
 			return;
 		}
 
@@ -109,7 +113,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 				email: String(email).trim().toLowerCase(),
 				phone: String(phone).trim(),
 				passwordHash,
-				role: role ? (String(role).toUpperCase() as Role) : Role.MANAGER,
+				role: role ? (String(role).toUpperCase() as Role) : Role.TENANT_MANAGER,
 			},
 			select: {
 				id: true,

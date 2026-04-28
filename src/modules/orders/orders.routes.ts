@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns credit orders that have crossed their due date and still have outstanding balances.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -56,6 +57,7 @@ router.get('/overdue', ctrl.getOverdueOrders);
  *     description: Returns all sales orders, including dealer information, totals, and status.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -89,6 +91,7 @@ router.get('/', ctrl.getAllOrders);
  *     description: Returns a single order with item lines, dealer info, and fulfillment details.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -134,6 +137,7 @@ router.get('/:id', ctrl.getOrderById);
  *     description: Creates a new dealer order with one or more design line items.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -204,6 +208,7 @@ router.post('/', ctrl.createOrder);
  *     description: Moves a draft order into the confirmed state and locks its commercial details.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -259,6 +264,7 @@ router.patch('/:id/confirm', ctrl.confirmOrder);
  *     description: Marks an order as packed and ready for dispatch.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -314,6 +320,7 @@ router.patch('/:id/pack', ctrl.markAsPacked);
  *     description: Marks an order as dispatched and records fulfillment completion.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -369,6 +376,7 @@ router.patch('/:id/dispatch', ctrl.dispatchOrder);
  *     description: Cancels an existing order and removes it from active fulfillment workflows.
  *     tags: [Orders]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -417,3 +425,4 @@ router.patch('/:id/dispatch', ctrl.dispatchOrder);
 router.patch('/:id/cancel', ctrl.cancelOrder);
 
 export default router;
+

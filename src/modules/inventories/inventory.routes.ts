@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns inventory balances for all designs, including unpackaged pieces and packaged dozens.
  *     tags: [Inventory]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -44,6 +45,7 @@ router.get('/', ctrl.getAllInventory);
  *     description: Converts unpackaged pieces into packaged dozens and records the packaging event.
  *     tags: [Inventory]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -112,6 +114,7 @@ router.post('/package', ctrl.createPackagingBatch);
  *     description: Returns historical packaging batches for audit and stock traceability.
  *     tags: [Inventory]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -157,6 +160,7 @@ router.get('/packaging-history', ctrl.getPackagingHistory);
  *     description: Returns the current inventory row for the specified design.
  *     tags: [Inventory]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -202,6 +206,7 @@ router.get('/:designId', ctrl.getInventoryByDesign);
  *     description: Updates the alert threshold at which low stock should be flagged for a design.
  *     tags: [Inventory]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -262,3 +267,4 @@ router.get('/:designId', ctrl.getInventoryByDesign);
 router.patch('/:designId/alert', ctrl.setLowStockAlert);
 
 export default router;
+

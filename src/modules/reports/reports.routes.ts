@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns summarized sales totals grouped by day.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -51,6 +52,7 @@ router.get('/sales', ctrl.getSalesReport);
  *     description: Returns a combined report of finished goods stock by design.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -91,6 +93,7 @@ router.get('/stock', ctrl.getStockReport);
  *     description: Returns worker productivity and earnings metrics for reporting dashboards.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -133,6 +136,7 @@ router.get('/workers', ctrl.getWorkerReport);
  *     description: Returns summarized raw material purchase entries for reporting.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -175,6 +179,7 @@ router.get('/purchases', ctrl.getPurchaseReport);
  *     description: Returns top-level margin and profitability metrics for the business.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -223,6 +228,7 @@ router.get('/profit-overview', ctrl.getProfitOverview);
  *     description: Returns a mixed dashboard payload containing alerts, top metrics, and operational highlights.
  *     tags: [Reports]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -264,3 +270,4 @@ router.get('/profit-overview', ctrl.getProfitOverview);
 router.get('/dashboard', ctrl.getDashboardSummary);
 
 export default router;
+

@@ -1,9 +1,11 @@
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 
 import swaggerSpec from './config/swagger';
+import { requireAuth } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import assignmentRoutes from './modules/assignments/assignments.routes';
 import authRoutes from './modules/auth/auth.routes';
@@ -22,7 +24,15 @@ const app = express();
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			callback(null, origin ?? true);
+		},
+		credentials: true,
+	})
+);
+app.use(cookieParser());
 app.use(express.json());
 
 // Swagger UI - accessible at /api/docs
@@ -40,17 +50,17 @@ app.use(
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/raw-materials', rawMaterialRoutes);
-app.use('/api/supplementary', supplementaryRoutes);
-app.use('/api/designs', designRoutes);
-app.use('/api/workers', workerRoutes);
-app.use('/api/assignments', assignmentRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/parties', partyRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/users', requireAuth, userRoutes);
+app.use('/api/raw-materials', requireAuth, rawMaterialRoutes);
+app.use('/api/supplementary', requireAuth, supplementaryRoutes);
+app.use('/api/designs', requireAuth, designRoutes);
+app.use('/api/workers', requireAuth, workerRoutes);
+app.use('/api/assignments', requireAuth, assignmentRoutes);
+app.use('/api/inventory', requireAuth, inventoryRoutes);
+app.use('/api/parties', requireAuth, partyRoutes);
+app.use('/api/orders', requireAuth, orderRoutes);
+app.use('/api/payments', requireAuth, paymentRoutes);
+app.use('/api/reports', requireAuth, reportRoutes);
 
 // Global error handler - always last
 app.use(errorHandler);

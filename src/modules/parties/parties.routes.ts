@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns all dealers and suppliers maintained in the party master.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -44,6 +45,7 @@ router.get('/', ctrl.getAllParties);
  *     description: Returns the subset of parties whose type is `DEALER`.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -77,6 +79,7 @@ router.get('/dealers', ctrl.getAllDealers);
  *     description: Returns the subset of parties whose type is `SUPPLIER`.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -110,6 +113,7 @@ router.get('/suppliers', ctrl.getAllSuppliers);
  *     description: Returns a single dealer or supplier record by UUID.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -155,6 +159,7 @@ router.get('/:id', ctrl.getPartyById);
  *     description: Creates a new dealer or supplier profile with credit and tax details.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -223,6 +228,7 @@ router.post('/', ctrl.createParty);
  *     description: Updates master details for a dealer or supplier profile.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -295,6 +301,7 @@ router.patch('/:id', ctrl.updateParty);
  *     description: Marks a dealer or supplier profile as inactive.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -350,6 +357,7 @@ router.patch('/:id/deactivate', ctrl.deactivateParty);
  *     description: Returns debit and credit ledger entries for the supplied party.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -411,6 +419,7 @@ router.get('/:id/ledger', ctrl.getPartyLedger);
  *     description: Returns outstanding and overdue balances for the supplied party.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -466,6 +475,7 @@ router.get('/:id/outstanding', ctrl.getPartyOutstanding);
  *     description: Stores a custom per-dozen price for a dealer and design combination.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -545,6 +555,7 @@ router.post('/:id/dealer-prices', ctrl.setDealerPrice);
  *     description: Returns all custom prices configured for a dealer across designs.
  *     tags: [Parties]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -594,3 +605,4 @@ router.post('/:id/dealer-prices', ctrl.setDealerPrice);
 router.get('/:id/dealer-prices', ctrl.getDealerPrices);
 
 export default router;
+

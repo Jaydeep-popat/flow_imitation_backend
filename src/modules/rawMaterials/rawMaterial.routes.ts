@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns all configured raw material master records with unit and status information.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -53,6 +54,7 @@ router.get('/types', ctrl.getAllMaterialTypes);
  *     description: Creates a raw material master entry used for stock purchases and assignments.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -115,6 +117,7 @@ router.post('/types', ctrl.createMaterialType);
  *     description: Updates the name, unit, or active status of a raw material type.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -188,6 +191,7 @@ router.patch('/types/:id', ctrl.updateMaterialType);
  *     description: Returns purchase history records for raw materials bought from suppliers.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -237,6 +241,7 @@ router.get('/purchases', ctrl.getAllPurchases);
  *     description: Returns the details of one raw material purchase entry.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -298,6 +303,7 @@ router.get('/purchases/:id', ctrl.getPurchaseById);
  *     description: Records a supplier purchase of raw materials and updates stock history.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -377,6 +383,7 @@ router.post('/purchases', ctrl.createPurchase);
  *     description: Returns the running stock balance for each raw material type.
  *     tags: [Raw Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -414,3 +421,4 @@ router.post('/purchases', ctrl.createPurchase);
 router.get('/stock', ctrl.getRawMaterialStock);
 
 export default router;
+

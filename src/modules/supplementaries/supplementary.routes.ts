@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns the catalog of supplementary materials such as stones, fittings, and consumables.
  *     tags: [Supplementary Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -55,6 +56,7 @@ router.get('/', ctrl.getAllSupplementaryTypes);
  *     description: Adds a new supplementary material definition for stock tracking and issuance.
  *     tags: [Supplementary Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -122,6 +124,7 @@ router.post('/', ctrl.createSupplementaryType);
  *     description: Updates the properties of a supplementary material master record.
  *     tags: [Supplementary Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -199,6 +202,7 @@ router.patch('/:id', ctrl.updateSupplementaryType);
  *     description: Applies a manual stock adjustment to a supplementary material entry.
  *     tags: [Supplementary Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -269,6 +273,7 @@ router.patch('/:id/stock', ctrl.adjustStock);
  *     description: Returns all supplementary material issues recorded against worker assignments.
  *     tags: [Supplementary Materials]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -307,3 +312,4 @@ router.patch('/:id/stock', ctrl.adjustStock);
 router.get('/issuances', ctrl.getAllIssuances);
 
 export default router;
+

@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns the list of available design categories used to classify design records.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -49,6 +50,7 @@ router.get('/categories', ctrl.getAllCategories);
  *     description: Creates a new design category for grouping similar jewellery designs.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -103,6 +105,7 @@ router.post('/categories', ctrl.createCategory);
  *     description: Returns the catalog of designs available for assignments, pricing, and sales.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -136,6 +139,7 @@ router.get('/', ctrl.getAllDesigns);
  *     description: Returns a single design record with material, finish, and rate details.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -181,6 +185,7 @@ router.get('/:id', ctrl.getDesignById);
  *     description: Adds a new design with product code, material, rates, and sale price information.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -249,6 +254,7 @@ router.post('/', ctrl.createDesign);
  *     description: Updates the details of an existing design, including rates and category metadata.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -319,6 +325,7 @@ router.patch('/:id', ctrl.updateDesign);
  *     description: Marks a design as inactive so it no longer appears in active business flows.
  *     tags: [Designs]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -367,3 +374,4 @@ router.patch('/:id', ctrl.updateDesign);
 router.patch('/:id/deactivate', ctrl.deactivateDesign);
 
 export default router;
+

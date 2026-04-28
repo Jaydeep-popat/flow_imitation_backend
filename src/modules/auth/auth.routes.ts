@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import {
+	requireActiveTenant,
+	requireAuth,
+} from '../../middleware/auth.middleware';
 import * as ctrl from './auth.controller';
 
 const router = Router();
@@ -8,10 +12,8 @@ const router = Router();
  * /api/auth/login:
  *   post:
  *     summary: Authenticate a user
- *     description: Validates login credentials and returns a demo JWT plus the authenticated user profile.
+ *     description: Validates login credentials, sets HTTP-only access and refresh token cookies, and returns an access token plus tenant-aware user context.
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -19,15 +21,16 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - phone
  *               - password
  *             properties:
- *               email:
+ *               phone:
  *                 type: string
- *                 example: owner@ayanshi.com
+ *                 example: '9876543210'
  *               password:
  *                 type: string
- *                 example: supersecret123
+ *                 format: password
+ *                 example: 'yourpassword'
  *     responses:
  *       200:
  *         description: Login successful
@@ -44,11 +47,22 @@ const router = Router();
  *                   properties:
  *                     token:
  *                       type: string
- *                       example: demo.jwt.token
+ *                       example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
  *                     user:
  *                       $ref: '#/components/schemas/User'
+ *         headers:
+ *           Set-Cookie:
+ *             description: Sets the HTTP-only `accessToken` and `refreshToken` cookies.
+ *             schema:
+ *               type: string
  *       401:
  *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Tenant suspended - subscription inactive
  *         content:
  *           application/json:
  *             schema:
@@ -58,12 +72,49 @@ router.post('/login', ctrl.login);
 
 /**
  * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh the current session
+ *     description: Validates the refresh token cookie, rotates it, and sets a fresh pair of auth cookies.
+ *     tags: [Auth]
+ *     security:
+ *       - refreshTokenCookie: []
+ *     responses:
+ *       200:
+ *         description: Session refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthSessionResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: Replaces both the HTTP-only `accessToken` and `refreshToken` cookies.
+ *             schema:
+ *               type: string
+ *       401:
+ *         description: Missing, expired, invalid, or reused refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Tenant suspended - subscription inactive
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/refresh', ctrl.refresh);
+
+/**
+ * @swagger
  * /api/auth/logout:
  *   post:
  *     summary: Logout the current user
- *     description: Invalidates the current session on the client side and returns a confirmation message.
+ *     description: Requires a valid access token, clears auth cookies, and revokes the matching refresh token if the refresh cookie is present.
  *     tags: [Auth]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -71,25 +122,26 @@ router.post('/login', ctrl.login);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: Logged out successfully
+ *               $ref: '#/components/schemas/MessageResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: Clears the `accessToken` and `refreshToken` cookies.
+ *             schema:
+ *               type: string
  *       401:
  *         description: Unauthorized
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Tenant suspended or insufficient role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout', ctrl.logout);
+router.post('/logout', requireAuth, requireActiveTenant, ctrl.logout);
 
 /**
  * @swagger
@@ -99,6 +151,7 @@ router.post('/logout', ctrl.logout);
  *     description: Returns the currently authenticated user's profile information.
  *     tags: [Auth]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -119,17 +172,24 @@ router.post('/logout', ctrl.logout);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Tenant suspended or insufficient role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/me', ctrl.getMe);
+router.get('/me', requireAuth, requireActiveTenant, ctrl.getMe);
 
 /**
  * @swagger
  * /api/auth/change-password:
  *   post:
  *     summary: Change account password
- *     description: Updates the password for the authenticated user after validating the provided credentials.
+ *     description: Updates the password for the authenticated user, revokes all active refresh-token sessions for that user, and clears auth cookies so the user must log in again.
  *     tags: [Auth]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -153,24 +213,26 @@ router.get('/me', ctrl.getMe);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: Password updated successfully
+ *               $ref: '#/components/schemas/MessageResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: Clears the `accessToken` and `refreshToken` cookies after the password change.
+ *             schema:
+ *               type: string
  *       401:
  *         description: Unauthorized
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Tenant suspended or insufficient role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/change-password', ctrl.changePassword);
+router.post('/change-password', requireAuth, requireActiveTenant, ctrl.changePassword);
 
 export default router;
+

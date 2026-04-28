@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns dealer, supplier, and worker payment transactions recorded in the system.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -44,6 +45,7 @@ router.get('/', ctrl.getAllPayments);
  *     description: Returns the overall outstanding balance and dealer-wise aging breakdown.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -94,6 +96,7 @@ router.get('/outstanding', ctrl.getOutstandingReport);
  *     description: Returns a daily inflow, outflow, and net cashflow summary.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -136,6 +139,7 @@ router.get('/cashflow', ctrl.getDailyCashflow);
  *     description: Returns the details of a single payment transaction.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -181,6 +185,7 @@ router.get('/:id', ctrl.getPaymentById);
  *     description: Records a payment or advance received from a dealer against an order or account balance.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -243,6 +248,7 @@ router.post('/dealer', ctrl.recordDealerPayment);
  *     description: Records a payment made to a supplier for material purchases or outstanding balances.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -301,6 +307,7 @@ router.post('/supplier', ctrl.recordSupplierPayment);
  *     description: Records a wage or advance payment made to a worker.
  *     tags: [Payments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -356,3 +363,4 @@ router.post('/supplier', ctrl.recordSupplierPayment);
 router.post('/worker', ctrl.recordWorkerPayment);
 
 export default router;
+

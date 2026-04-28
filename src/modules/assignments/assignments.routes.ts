@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns assignment records that track issued work, expected output, and completion status.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -44,6 +45,7 @@ router.get('/', ctrl.getAllAssignments);
  *     description: Returns detailed information for a single assignment.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -89,6 +91,7 @@ router.get('/:id', ctrl.getAssignmentById);
  *     description: Issues a new production assignment to a worker for a selected design and material quantity.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -152,6 +155,7 @@ router.post('/', ctrl.createAssignment);
  *     description: Moves an assignment through its workflow such as `ISSUED`, `IN_PROGRESS`, or `COMPLETED`.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -219,6 +223,7 @@ router.patch('/:id/status', ctrl.updateAssignmentStatus);
  *     description: Closes an assignment manually once returns and financial reconciliation are complete.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -274,6 +279,7 @@ router.patch('/:id/close', ctrl.closeAssignment);
  *     description: Records finished or rejected pieces returned against an assignment.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -356,6 +362,7 @@ router.post('/:id/returns', ctrl.recordGoodsReturn);
  *     description: Returns all goods return entries recorded against the specified assignment.
  *     tags: [Assignments]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -409,3 +416,4 @@ router.post('/:id/returns', ctrl.recordGoodsReturn);
 router.get('/:id/returns', ctrl.getAssignmentReturns);
 
 export default router;
+

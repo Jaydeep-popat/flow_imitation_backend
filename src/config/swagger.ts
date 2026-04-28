@@ -1,3 +1,4 @@
+import { PlanType, Role, TenantStatus } from '@prisma/client';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 const options: swaggerJsdoc.Options = {
@@ -21,11 +22,26 @@ const options: swaggerJsdoc.Options = {
 		],
 		components: {
 			securitySchemes: {
+				accessTokenCookie: {
+					type: 'apiKey',
+					in: 'cookie',
+					name: 'accessToken',
+					description:
+						'Primary authentication method for browser clients. This HTTP-only cookie is issued by POST /api/auth/login and rotated through POST /api/auth/refresh.',
+				},
+				refreshTokenCookie: {
+					type: 'apiKey',
+					in: 'cookie',
+					name: 'refreshToken',
+					description:
+						'Refresh-session cookie used only by POST /api/auth/refresh. It is HTTP-only, long-lived, and rotated on every refresh.',
+				},
 				bearerAuth: {
 					type: 'http',
 					scheme: 'bearer',
 					bearerFormat: 'JWT',
-					description: 'Enter your JWT token. Get it from POST /api/auth/login',
+					description:
+						'Optional fallback for non-browser clients. The backend also accepts Authorization: Bearer <access-token> for access-token protected routes.',
 				},
 			},
 			schemas: {
@@ -40,8 +56,88 @@ const options: swaggerJsdoc.Options = {
 					type: 'object',
 					properties: {
 						success: { type: 'boolean', example: false },
-						message: { type: 'string', example: 'Something went wrong' },
+						error: {
+							type: 'object',
+							properties: {
+								code: {
+									type: 'string',
+									example: 'INVALID_ACCESS_TOKEN',
+								},
+								message: {
+									type: 'string',
+									example: 'Access token is invalid',
+								},
+								details: {
+									type: 'object',
+									nullable: true,
+									additionalProperties: true,
+								},
+							},
+							required: ['code', 'message'],
+						},
 					},
+					required: ['success', 'error'],
+				},
+				AuthTiming: {
+					type: 'object',
+					properties: {
+						accessTokenExpiresAt: {
+							type: 'string',
+							format: 'date-time',
+						},
+						refreshTokenExpiresAt: {
+							type: 'string',
+							format: 'date-time',
+						},
+					},
+					required: ['accessTokenExpiresAt', 'refreshTokenExpiresAt'],
+				},
+				AuthSessionResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								token: {
+									type: 'string',
+									example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+								},
+								user: {
+									$ref: '#/components/schemas/User',
+								},
+							},
+							required: ['token', 'user'],
+						},
+					},
+					required: ['success', 'data'],
+				},
+				UserResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							$ref: '#/components/schemas/User',
+						},
+					},
+					required: ['success', 'data'],
+				},
+				MessageResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								message: {
+									type: 'string',
+									example: 'Operation completed successfully',
+								},
+							},
+							required: ['message'],
+						},
+					},
+					required: ['success', 'data'],
 				},
 				User: {
 					type: 'object',
@@ -50,9 +146,33 @@ const options: swaggerJsdoc.Options = {
 						name: { type: 'string', example: 'Ravi Shah' },
 						email: { type: 'string', example: 'ravi@flowoid.com' },
 						phone: { type: 'string', example: '9876543210' },
-						role: { type: 'string', enum: ['OWNER', 'MANAGER', 'VIEWER'] },
-						isActive: { type: 'boolean', example: true },
-						createdAt: { type: 'string', format: 'date-time' },
+						role: { type: 'string', enum: Object.values(Role) },
+						tenant: {
+							oneOf: [
+								{ $ref: '#/components/schemas/Tenant' },
+								{ type: 'null' },
+							],
+						},
+					},
+				},
+				Tenant: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', format: 'uuid' },
+						name: { type: 'string', example: 'Ayanshi Imitation' },
+						slug: { type: 'string', example: 'ayanshi-imitation' },
+						plan: { type: 'string', enum: Object.values(PlanType) },
+						status: { type: 'string', enum: Object.values(TenantStatus) },
+						trialEndsAt: {
+							type: 'string',
+							format: 'date-time',
+							nullable: true,
+						},
+						subscriptionEndsAt: {
+							type: 'string',
+							format: 'date-time',
+							nullable: true,
+						},
 					},
 				},
 				Worker: {
@@ -167,7 +287,7 @@ const options: swaggerJsdoc.Options = {
 				},
 			},
 		},
-		security: [{ bearerAuth: [] }],
+		security: [{ accessTokenCookie: [] }, { bearerAuth: [] }],
 	},
 	apis: ['./src/modules/**/*.routes.ts'],
 };

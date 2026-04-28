@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns the full user list and supports filtering by `isActive=true` or `isActive=false`.
  *     tags: [Users]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
@@ -50,6 +51,7 @@ router.get('/', ctrl.getAllUsers);
  *     description: Returns a single user's details for the supplied UUID.
  *     tags: [Users]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -95,6 +97,7 @@ router.get('/:id', ctrl.getUserById);
  *     description: Creates a new system user account with name, email, phone, password, and role.
  *     tags: [Users]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -159,6 +162,7 @@ router.post('/', ctrl.createUser);
  *     description: Updates profile attributes such as name, phone, role, or active state for a user.
  *     tags: [Users]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -226,6 +230,7 @@ router.patch('/:id', ctrl.updateUser);
  *     description: Marks a user account as inactive without deleting the record permanently.
  *     tags: [Users]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -274,3 +279,4 @@ router.patch('/:id', ctrl.updateUser);
 router.patch('/:id/deactivate', ctrl.deactivateUser);
 
 export default router;
+

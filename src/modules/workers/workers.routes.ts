@@ -11,6 +11,7 @@ const router = Router();
  *     description: Returns list of all artisan workers registered in the system.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     responses:
  *       200:
@@ -44,6 +45,7 @@ router.get('/', ctrl.getAllWorkers);
  *     description: Returns total earnings, total paid, outstanding balance, and productivity stats for a worker.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -107,6 +109,7 @@ router.get('/:id/summary', ctrl.getWorkerSummary);
  *     description: Returns a single worker with profile details for the supplied UUID.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -152,6 +155,7 @@ router.get('/:id', ctrl.getWorkerById);
  *     description: Registers a new artisan worker with contact and identity proof details.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
@@ -213,6 +217,7 @@ router.post('/', ctrl.createWorker);
  *     description: Updates contact information or identity proof details for an existing worker.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -281,6 +286,7 @@ router.patch('/:id', ctrl.updateWorker);
  *     description: Marks a worker profile as inactive without removing historical records.
  *     tags: [Workers]
  *     security:
+ *       - accessTokenCookie: []
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
@@ -329,3 +335,4 @@ router.patch('/:id', ctrl.updateWorker);
 router.patch('/:id/deactivate', ctrl.deactivateWorker);
 
 export default router;
+
