@@ -22,6 +22,19 @@ import workerRoutes from './modules/workers/workers.routes';
 
 const app = express();
 
+// Swagger UI - registered before helmet() so CSP headers don't block its JS bundles
+app.use(
+	'/api/docs',
+	swaggerUi.serve,
+	swaggerUi.setup(swaggerSpec, {
+		customSiteTitle: 'Ayanshi BMS API Docs',
+		customCss: '.swagger-ui .topbar { background-color: #0F3460; }',
+		swaggerOptions: {
+			persistAuthorization: true,
+		},
+	}),
+);
+
 // Middleware
 app.use(helmet());
 app.use(
@@ -34,19 +47,6 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
-
-// Swagger UI - accessible at /api/docs
-app.use(
-	'/api/docs',
-	swaggerUi.serve,
-	swaggerUi.setup(swaggerSpec, {
-		customSiteTitle: 'Ayanshi BMS API Docs',
-		customCss: '.swagger-ui .topbar { background-color: #0F3460; }',
-		swaggerOptions: {
-			persistAuthorization: true,
-		},
-	}),
-);
 
 // Routes
 app.use('/api/auth', authRoutes);
