@@ -49,6 +49,9 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Routes
+app.get("/health", (req, res) => {
+	res.status(200).json({ message: "OK" });
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/users', requireAuth, userRoutes);
 app.use('/api/raw-materials', requireAuth, rawMaterialRoutes);
