@@ -94,7 +94,7 @@ router.get('/:id', ctrl.getUserById);
  * /api/users:
  *   post:
  *     summary: Create a user
- *     description: Creates a new system user account with name, email, phone, password, and role.
+ *     description: Creates a new platform user account. `email` is optional, `phone` is the unique login identifier, and role values must match the multi-tenant role model.
  *     tags: [Users]
  *     security:
  *       - accessTokenCookie: []
@@ -107,7 +107,6 @@ router.get('/:id', ctrl.getUserById);
  *             type: object
  *             required:
  *               - name
- *               - email
  *               - phone
  *               - password
  *             properties:
@@ -116,6 +115,7 @@ router.get('/:id', ctrl.getUserById);
  *                 example: Ravi Shah
  *               email:
  *                 type: string
+ *                 nullable: true
  *                 example: ravi@flowoid.com
  *               phone:
  *                 type: string
@@ -125,7 +125,7 @@ router.get('/:id', ctrl.getUserById);
  *                 example: password123
  *               role:
  *                 type: string
- *                 enum: [OWNER, MANAGER, VIEWER]
+ *                 enum: [SUPER_ADMIN, TENANT_OWNER, TENANT_MANAGER, TENANT_VIEWER]
  *     responses:
  *       201:
  *         description: User created successfully
@@ -185,7 +185,7 @@ router.post('/', ctrl.createUser);
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [OWNER, MANAGER, VIEWER]
+ *                 enum: [SUPER_ADMIN, TENANT_OWNER, TENANT_MANAGER, TENANT_VIEWER]
  *               isActive:
  *                 type: boolean
  *     responses:
